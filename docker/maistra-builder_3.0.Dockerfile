@@ -16,7 +16,7 @@ ENV DOCKER_BUILDX_VERSION=0.13.1
 # Install all dependencies available in RPM repos
 # Stick with golang 1.22
 # Stick with OpenSSL 3.0.7, used in RHEL 9, which is the base for OSSM 3.0
-# Stick with python 3.11
+# Stick with python 3.12
 # hadolint ignore=DL3008, DL3009
 RUN dnf -y upgrade --refresh && \
     dnf --enablerepo=crb -y install --setopt=install_weak_deps=False --allowerasing \
@@ -29,9 +29,10 @@ RUN dnf -y upgrade --refresh && \
         ca-certificates curl gnupg2 \
         openssh libtool libtool-ltdl glibc \
         make pkgconf-pkg-config \
-        python3.11 python3.11-devel python3.11-pip python3.11-setuptools \
+        python3.12 python3.12-devel python3.12-pip python3.12-setuptools \
+        perl \
         wget jq rsync \
-        compat-openssl11 openssl-3.0.7 openssl-devel-3.0.7 \
+        compat-openssl11 \
         gcc libstdc++-static \
         libxcrypt-compat-0:4.4.18-3.el9 \
         libatomic \
@@ -96,6 +97,15 @@ ENV BAZEL_VERSION=6.5.0
 RUN curl -o /usr/bin/bazel -Ls https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-x86_64 && \
     chmod +x /usr/bin/bazel
 
+# Openssl 3.0.7
+RUN  git clone https://github.com/openssl/openssl.git && \
+     cd openssl && \
+     git checkout openssl-3.0.7 && \
+     ./config --prefix=/ --openssldir=/lib64 && \
+     make  && \
+     make install && \
+     cd .. && rm -rf openssl
+
 # Install su-exec which is a tool that operates like sudo without the overhead
 ENV SU_EXEC_VERSION=0.3.1
 RUN wget -nv https://github.com/NobodyXu/su-exec/archive/refs/tags/v${SU_EXEC_VERSION}.tar.gz && \
@@ -108,7 +118,7 @@ RUN wget -nv https://github.com/NobodyXu/su-exec/archive/refs/tags/v${SU_EXEC_VE
 # Workarounds for proxy and bazel
 RUN useradd user && chmod 777 /home/user
 ENV USER=user HOME=/home/user
-RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+RUN alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 1
 
 # Mimic Ubuntu path for this file, required by Envoy tests
 RUN ln -s /etc/ssl/certs/ca-bundle.crt /etc/ssl/certs/ca-certificates.crt
