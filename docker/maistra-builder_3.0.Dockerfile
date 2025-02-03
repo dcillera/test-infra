@@ -1,4 +1,4 @@
-FROM quay.io/rockylinux/rockylinux:9.4
+FROM quay.io/rockylinux/rockylinux:9.5
 
 ENV GOLANG_VERSION=1.23.4
 ENV GOPROXY="https://proxy.golang.org,direct"
@@ -83,14 +83,14 @@ RUN set -eux; \
     rm -rf ${LLVM_ARTIFACT}.tar.xz /tmp/${LLVM_ARCHIVE}
 
 # OpenSSL 3.0.x
-ENV OPENSSL_VERSION=3.0.15
-ENV OPENSSL_ROOT_DIR=/opt/openssl
-RUN curl -sfL https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz | tar xz -C /tmp && \
-    cd /tmp/openssl-${OPENSSL_VERSION} && \
-    ./Configure --prefix=${OPENSSL_ROOT_DIR} --openssldir=${OPENSSL_ROOT_DIR}/conf && \
-    make -j4 && make install_sw && \
-    echo "${OPENSSL_ROOT_DIR}/lib64" > /etc/ld.so.conf.d/openssl.conf && ldconfig && \
-    cd /tmp && rm -rf /tmp/openssl-${OPENSSL_VERSION}
+#ENV OPENSSL_VERSION=3.0.15
+#ENV OPENSSL_ROOT_DIR=/opt/openssl
+#RUN curl -sfL https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz | tar xz -C /tmp && \
+#    cd /tmp/openssl-${OPENSSL_VERSION} && \
+#    ./Configure --prefix=${OPENSSL_ROOT_DIR} --openssldir=${OPENSSL_ROOT_DIR}/conf && \
+#    make -j4 && make install_sw && \
+#    echo "${OPENSSL_ROOT_DIR}/lib64" > /etc/ld.so.conf.d/openssl.conf && ldconfig && \
+#    cd /tmp && rm -rf /tmp/openssl-${OPENSSL_VERSION}
 
 # Google cloud tools
 ENV GCLOUD_VERSION=467.0.0
@@ -154,6 +154,9 @@ ENV PATH=/usr/lib/llvm/bin:/usr/local/google-cloud-sdk/bin:$PATH
 
 ADD scripts/prow-entrypoint-main.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
+
+RUN ln /lib64/libssl.so.3.2.2 /lib64/libssl.so
+RUN ln /lib64/libcrypto.so.3.2.2 /lib64/libcrypto.so
 
 # Run config setup in local environments
 COPY scripts/docker-entrypoint-3.0.sh /usr/local/bin/docker-entrypoint
